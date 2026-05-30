@@ -1,0 +1,38 @@
+const fs = require('fs');
+const vm = require('vm');
+const files = ['math','body','collision','world','particles','destruction','entities'];
+let src = files.map(f => fs.readFileSync('js/' + f + '.js', 'utf8')).join('\n;\n');
+const ctx = { console, Math, isFinite, Float32Array, Uint8Array, Map, Set, Array, JSON, performance: { now: () => 0 } };
+vm.createContext(ctx);
+vm.runInContext(src, ctx);
+const T = vm.runInContext(`(function(){
+  const out = {};
+  const world = new World({ gravity: 980 });
+  world.add(makeBox(0, 600, 2000, 80, { material: 'stone', isStatic: true }));
+  const box = makeBox(0, 200, 40, 40, { material: 'wood' });
+  world.add(box);
+  const circle = makeCircle(120, 150, 18, { material: 'metal' });
+  world.add(circle);
+  let nan = false;
+  for (let i = 0; i < 600; i++) { world.step(1/120); if (!isFinite(box.position.y)) { nan = true; break; } }
+  out.boxRestY = +box.position.y.toFixed(2);
+  out.boxVel = +box.velocity.len().toFixed(3);
+  out.circleY = +circle.position.y.toFixed(2);
+  out.nan = nan;
+  const A = makeBox(0,0,100,100,{material:'wood'});
+  const B = makeCircle(60,0,20,{material:'wood'});
+  const m = Collision.test(A,B); out.polyCircleN = [ +m.normal.x.toFixed(2), +m.normal.y.toFixed(2) ]; out.pen = +m.penetration.toFixed(2);
+  const m2 = Collision.test(B,A); out.circlePolyN = [ +m2.normal.x.toFixed(2), +m2.normal.y.toFixed(2) ];
+  const tnt = makeBox(300,540,30,30,{material:'tnt'}); world.add(tnt);
+  world.explode(new Vec2(300,540),200,600);
+  out.explEvents = world.explosionEvents.length; out.destroyQ = world.destroyQueue.length;
+  out.shards = Destruction.shatter(tnt, new Vec2(300,540), 600).length;
+  const w2 = new World({ gravity: 980 });
+  w2.add(makeBox(0,600,2000,80,{material:'stone',isStatic:true}));
+  for (let i=0;i<8;i++) w2.add(makeBox(0,540-i*42,40,40,{material:'wood'}));
+  for (let i=0;i<900;i++) w2.step(1/120);
+  const top = w2.bodies[8];
+  out.stackTopY = +top.position.y.toFixed(1); out.stackDriftX = +top.position.x.toFixed(2); out.stackVel = +top.velocity.len().toFixed(2);
+  return out;
+})()`, ctx);
+console.log(JSON.stringify(T, null, 2));

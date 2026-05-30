@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FRACTURE — Physics Sandbox</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<!-- TOP BAR -->
+<header id="topbar">
+  <div class="brand"><span class="logo">▲</span> FRACTURE</div>
+  <div class="group">
+    <label>Map</label>
+    <select id="mapSelect" class="select"></select>
+  </div>
+  <div class="group time">
+    <button id="btnSlow" class="mini" title="Slow time [">«</button>
+    <span id="timeVal" class="time-val">1.00×</span>
+    <button id="btnFast" class="mini" title="Fast time ]">»</button>
+    <button id="btnNormal" class="mini" title="Reset speed">1×</button>
+  </div>
+  <div class="group">
+    <button id="btnPause" class="btn"><span class="lbl">Pause</span></button>
+    <button id="btnFreeze" class="btn" title="Freeze all (F)">Freeze</button>
+    <button id="btnClear" class="btn danger" title="Clear dynamic (R)">Clear</button>
+  </div>
+  <div class="group grav">
+    <label>Gravity</label>
+    <input id="gravSlider" type="range" min="-400" max="2400" value="980" step="20">
+    <span id="gravVal" class="val">980</span>
+  </div>
+  <div id="stats" class="stats"></div>
+  <div class="group right">
+    <button id="btnMinimap" class="btn" title="Toggle minimap (M)">Map</button>
+    <button id="btnHelp" class="btn">?</button>
+  </div>
+</header>
+
+<!-- LEFT TOOLBAR -->
+<aside id="toolbar"></aside>
+
+<!-- SPAWN PANEL -->
+<section id="spawnPanel">
+  <div class="panel-title">SPAWN</div>
+  <div class="panel-sub">Shape</div>
+  <div id="shapeRow" class="row"></div>
+  <div class="panel-sub">Material</div>
+  <div id="matRow" class="row wrap"></div>
+  <div class="panel-sub">Size <span id="sizeVal">34</span></div>
+  <input id="sizeSlider" type="range" min="12" max="120" value="34" step="2">
+</section>
+
+<!-- SAVE / LOAD -->
+<section id="saveload">
+  <input id="saveName" class="text" type="text" placeholder="save name…">
+  <button id="btnSave" class="btn sm">Save</button>
+  <select id="slotSelect" class="select sm"></select>
+  <button id="btnLoad" class="btn sm">Load</button>
+  <button id="btnDelSlot" class="btn sm danger">✕</button>
+</section>
+
+<!-- HELP -->
+<div id="helpModal" class="modal">
+  <div class="modal-card">
+    <button id="helpClose" class="modal-close">✕</button>
+    <h2>▲ FRACTURE</h2>
+    <p class="tag">A neon 2D physics sandbox. Build, break, burn, drown, detonate.</p>
+    <div class="cols">
+      <div>
+        <h3>Tools</h3>
+        <ul>
+          <li><b>Grab</b> — drag & fling bodies</li>
+          <li><b>Spawn</b> — drop shapes; drag for slingshot</li>
+          <li><b>Delete</b> — remove on click/drag</li>
+          <li><b>Explosion</b> — radial blast</li>
+          <li><b>Fire</b> — ignite flammables, spreads</li>
+          <li><b>Water</b> — pour liquid (SPH)</li>
+          <li><b>Rope / Weld</b> — link two bodies</li>
+          <li><b>Blaster</b> — drag-aim, release to fire</li>
+          <li><b>Ragdoll / Vehicle</b> — spawn constructs</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Controls</h3>
+        <ul>
+          <li><b>1–9</b> select tools</li>
+          <li><b>Scroll</b> zoom · <b>Right/Middle/Alt-drag</b> pan</li>
+          <li><b>WASD</b> pan camera</li>
+          <li><b>← →</b> drive last vehicle</li>
+          <li><b>Space</b> pause · <b>F</b> freeze · <b>R</b> clear</li>
+          <li><b>[ ]</b> time scale · <b>M</b> minimap</li>
+        </ul>
+        <h3>Materials</h3>
+        <p class="tiny">wood burns · tnt cooks off · glass shatters · ice slides · rubber bounces · metal is heavy. Everything is destructible under enough force.</p>
+      </div>
+    </div>
+    <p class="credit">Built as a self-contained engine — custom rigid-body solver, fracturing, SPH fluid, fire propagation.</p>
+  </div>
+</div>
+
+<!-- engine -->
+<script src="js/math.js"></script>
+<script src="js/body.js"></script>
+<script src="js/collision.js"></script>
+<script src="js/world.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/destruction.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/render.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  const game = new Game(document.getElementById('scene'));
+  UI.init(game);
+  game.start();
+</script>
+</body>
+</html>
