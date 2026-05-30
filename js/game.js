@@ -105,16 +105,17 @@ class Game {
   _hotkey(e) {
     const k = e.key.toLowerCase();
     const map = { '1': 'drag', '2': 'spawn', '3': 'delete', '4': 'explode', '5': 'fire', '6': 'water', '7': 'rope', '8': 'weld', '9': 'weapon' };
-    if (map[k]) { this.tools.setTool(map[k]); if (window.UI) UI.syncTool(); return; }
+    const hasUI = typeof UI !== 'undefined' && UI.game;
+    if (map[k]) { this.tools.setTool(map[k]); if (hasUI) UI.syncTool(); return; }
     if (k === ' ') { e.preventDefault(); this.togglePause(); }
     if (k === 'f') this.freezeAll();
     if (k === 'r') this.clearDynamic();
     if (k === 'm') this.showMinimap = !this.showMinimap;
-    if (k === '[') { this.world.timeScale = M.clamp(this.world.timeScale * 0.6, 0.05, 3); if (window.UI) UI.syncTime(); }
-    if (k === ']') { this.world.timeScale = M.clamp(this.world.timeScale * 1.6, 0.05, 3); if (window.UI) UI.syncTime(); }
+    if (k === '[') { this.world.timeScale = M.clamp(this.world.timeScale * 0.6, 0.05, 3); if (hasUI) UI.syncTime(); }
+    if (k === ']') { this.world.timeScale = M.clamp(this.world.timeScale * 1.6, 0.05, 3); if (hasUI) UI.syncTime(); }
   }
 
-  togglePause() { this.world.paused = !this.world.paused; if (window.UI) UI.syncPause(); }
+  togglePause() { this.world.paused = !this.world.paused; if (typeof UI !== 'undefined' && UI.game) UI.syncPause(); }
   freezeAll() {
     const anyUnfrozen = this.world.bodies.some(b => b.invMass > 0 && !b.frozen);
     for (const b of this.world.bodies) if (b.invMass > 0) { b.frozen = anyUnfrozen; if (anyUnfrozen) { b.velocity.set(0, 0); b.angularVelocity = 0; } else b.wake(); }
