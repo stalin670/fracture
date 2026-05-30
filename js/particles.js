@@ -80,11 +80,12 @@ class Liquid {
     this.px = []; this.py = []; this.vx = []; this.vy = [];
     this.opx = []; this.opy = [];
     this.hue = [];
-    this.h = opts.h || 26;          // interaction radius
-    this.rest = opts.rest || 3.2;   // rest density
-    this.k = opts.k || 0.9;         // pressure stiffness
-    this.kNear = opts.kNear || 2.4; // near-pressure
-    this.sigma = 0.0; this.beta = 0.18; // viscosity
+    this.h = opts.h || 24;          // interaction radius
+    this.rest = opts.rest || 6;     // rest density (high = cohesive/contained)
+    this.k = opts.k || 0.8;         // pressure stiffness
+    this.kNear = opts.kNear || 1.6; // near-pressure
+    this.sigma = opts.sigma != null ? opts.sigma : 0.06;  // linear viscosity
+    this.beta = opts.beta != null ? opts.beta : 0.10;     // quadratic viscosity
     this.max = opts.max || 1400;
     this.grid = new Map();
     this.cell = this.h;
@@ -130,9 +131,34 @@ class Liquid {
     if (n === 0) return;
     const h = this.h;
 
-    // apply gravity + predict
+    // apply gravity
+    for (let i = 0; i < n; i++) this.vy[i] += gravity * dt;
+
+    // viscosity pass (Clavet): damp inward relative velocity for cohesion
+    this._buildGrid();
+    if (this.sigma > 0 || this.beta > 0) {
+      for (let i = 0; i < n; i++) {
+        const nb = this._neighbors(i);
+        for (const j of nb) {
+          if (j <= i) continue;
+          const dx = this.px[j] - this.px[i], dy = this.py[j] - this.py[i];
+          const r = Math.sqrt(dx * dx + dy * dy);
+          if (r >= h || r < 1e-6) continue;
+          const q = 1 - r / h;
+          const nx = dx / r, ny = dy / r;
+          const u = (this.vx[i] - this.vx[j]) * nx + (this.vy[i] - this.vy[j]) * ny;
+          if (u <= 0) continue;
+          let I = dt * q * (this.sigma * u + this.beta * u * u);
+          if (I > 90) I = 90;
+          const ix = nx * I * 0.5, iy = ny * I * 0.5;
+          this.vx[i] -= ix; this.vy[i] -= iy;
+          this.vx[j] += ix; this.vy[j] += iy;
+        }
+      }
+    }
+
+    // predict positions
     for (let i = 0; i < n; i++) {
-      this.vy[i] += gravity * dt;
       this.opx[i] = this.px[i]; this.opy[i] = this.py[i];
       this.px[i] += this.vx[i] * dt;
       this.py[i] += this.vy[i] * dt;
@@ -155,11 +181,14 @@ class Liquid {
           qcache.push([j, q, dx / r, dy / r]);
         }
       }
+      // position-based pressure (dt-independent). dt² scaling makes the
+      // displacement vanish at small timesteps, so we use a direct stiffness.
       const P = this.k * (rho - this.rest);
       const Pnear = this.kNear * rhoNear;
       let dxi = 0, dyi = 0;
       for (const [j, q, nx, ny] of qcache) {
-        const D = dt * dt * (P * q + Pnear * q * q);
+        let D = (P * q + Pnear * q * q);
+        if (D > 8) D = 8; else if (D < -4) D = -4;   // clamp to stay stable
         const dpx = nx * D * 0.5, dpy = ny * D * 0.5;
         this.px[j] += dpx; this.py[j] += dpy;
         dxi -= dpx; dyi -= dpy;
